@@ -13,6 +13,7 @@ Created on Tue Oct  1 23:55:57 2019
 Ceci est un script temporaire.
 """
 
+import pandas as pd
 
 #%%
 class piece():
@@ -625,94 +626,89 @@ class jeu():
             
 
 #%%
-echecs = jeu()
-if True:
-    tb1= echecs.tours_blancs[0]
-    fb1 = echecs.fous_blancs[0]
-    cb1 = echecs.cavaliers_blancs[0]
-    db = echecs.reine_blanc[0]
-    fb1.deplacement_possibles()
+        
+if __name__ == '__main__':    
+    echecs = jeu( )
+    if True:
+        tb1= echecs.tours_blancs[0]
+        fb1 = echecs.fous_blancs[0]
+        cb1 = echecs.cavaliers_blancs[0]
+        db = echecs.reine_blanc[0]
+        fb1.deplacement_possibles()
+        
+        ax = fb1.deplacements_to_df()
+        cb1.deplacements_to_df( ax=ax)
+        
+    echecs.draw()
+    echecs.draw_with_deplacements()
+    noirs = echecs.noirs()
+    blancs = echecs.blancs()
+    choix_blancs = echecs.choix_coup(echecs.blancs())
+    choix_noirs = echecs.choix_coup(echecs.noirs())
     
-    ax = fb1.deplacements_to_df()
-    cb1.deplacements_to_df( ax=ax)
-echecs.draw()
-echecs.draw_with_deplacements()
-noirs = echecs.noirs()
-blancs = echecs.blancs()
-choix_blancs = echecs.choix_coup(echecs.blancs())
-choix_noirs = echecs.choix_coup(echecs.noirs())
-
-def plot_choix(choix_equipe):
-    import seaborn as sns
-    import pandas  as pd
-    import numpy   as np
+    def plot_choix(choix_equipe):
+        import seaborn as sns
+        import pandas  as pd
+        import numpy   as np
+        
+        df      = pd.DataFrame(choix_equipe)
+        df["x"] = df.destination.apply(lambda case: case.colonne)
+        df["y"] = df.destination.apply(lambda case: case.ligne)
+        
+        tcd = df.pivot_table(index="y", columns="x", values="nb_de_points", aggfunc="max")
+        for x in range(1,9):
+            for y in range(1,9):
+                try    : _          = tcd.loc[x,y]
+                except : tcd.loc[x,y] = None
+                
+        tcd = tcd.sort_index(axis=0, ascending=True).sort_index(axis=1, ascending=True)
+        sns.heatmap(tcd, vmin=0, annot=True, cmap="Blues")        
+    plot_choix(choix_blancs)
+    plot_choix(choix_noirs )
     
-    df      = pd.DataFrame(choix_equipe)
-    df["x"] = df.destination.apply(lambda case: case.colonne)
-    df["y"] = df.destination.apply(lambda case: case.ligne)
+    mon_equipe           = echecs.blancs()
+    equipe_adverse       = echecs.noirs()
     
-    tcd = df.pivot_table(index="y", columns="x", values="nb_de_points", aggfunc="max")
-    for x in range(1,9):
-        for y in range(1,9):
-            try    : _          = tcd.loc[x,y]
-            except : tcd.loc[x,y] = None
-            
-    tcd = tcd.sort_index(axis=0, ascending=True).sort_index(axis=1, ascending=True)
-    sns.heatmap(tcd, vmin=0, annot=True, cmap="Blues")        
-plot_choix(choix_blancs)
-plot_choix(choix_noirs )
-
-mon_equipe           = echecs.blancs()
-equipe_adverse       = echecs.noirs()
-
-mouvements_adversaire = map(lambda piece: piece.deplacement_possibles(), equipe_adverse)
-mouvements_adversaire = [y for x in mouvements_adversaire for y in x]
-
-mouvements_ami = map(lambda piece: piece.deplacement_possibles(), mon_equipe)
-mouvements_ami = [y for x in mouvements_ami for y in x]
-
-nb_attaques_totales   = 0
-position = []
-for ma_piece in mon_equipe:
-    risque     = filter(lambda deplacement_adverse : ma_piece.est_sur_case(deplacement_adverse) , mouvements_adversaire)
-    defense    = filter(lambda deplacement_ami     : ma_piece.est_sur_case(deplacement_ami)     , mouvements_ami)
-    attaques   = list(risque)
-    defenses   = list(defense)
-    nb_attaque = len(attaques)
-    nb_defense = len(defenses)
-    dico       = {"piece" : ma_piece, "attaques" :attaques, "defenses":  defenses}
-    position.append(dico)
-    nb_attaques_totales += nb_attaque
-    print(ma_piece, nb_attaque )
-print(nb_attaques_totales, position)
-pd.DataFrame(position)
-
-
-
-
-
-
-
-
-
-
-echecs.blancs()[0].ligne = 6
-
-
-echecs.blancs()[0].ligne = 7
-
-dangers = []
-for ma_piece in mon_equipe:
-    for piece_adverse in equipe_adverse:
-        for destination_adverse in piece_adverse.deplacement_possibles():
-            if ma_piece.est_sur_case(destination_adverse):
-                dangers.append({"piece_adverse" : piece_adverse})
-defense = []
-for ma_piece in mon_equipe:
-    for piece_amie in mon_equipe:
-        for destination_amie in piece_amie.defenses_possibles():
-            if ma_piece.est_sur_case(destination_amie):
-                defense.append({"piece_a_proteger" : ma_piece,
-                                "piece_amie" : piece_amie})
-
-dangers
+    mouvements_adversaire = map(lambda piece: piece.deplacement_possibles(), equipe_adverse)
+    mouvements_adversaire = [y for x in mouvements_adversaire for y in x]
+    
+    mouvements_ami = map(lambda piece: piece.deplacement_possibles(), mon_equipe)
+    mouvements_ami = [y for x in mouvements_ami for y in x]
+    
+    nb_attaques_totales   = 0
+    position = []
+    for ma_piece in mon_equipe:
+        risque     = filter(lambda deplacement_adverse : ma_piece.est_sur_case(deplacement_adverse) , mouvements_adversaire)
+        defense    = filter(lambda deplacement_ami     : ma_piece.est_sur_case(deplacement_ami)     , mouvements_ami)
+        attaques   = list(risque)
+        defenses   = list(defense)
+        nb_attaque = len(attaques)
+        nb_defense = len(defenses)
+        dico       = {"piece" : ma_piece, "attaques" :attaques, "defenses":  defenses}
+        position.append(dico)
+        nb_attaques_totales += nb_attaque
+        print(ma_piece, nb_attaque )
+    print(nb_attaques_totales, position)
+    pd.DataFrame(position)
+    
+    
+    echecs.blancs()[0].ligne = 6
+    
+    
+    echecs.blancs()[0].ligne = 7
+    
+    dangers = []
+    for ma_piece in mon_equipe:
+        for piece_adverse in equipe_adverse:
+            for destination_adverse in piece_adverse.deplacement_possibles():
+                if ma_piece.est_sur_case(destination_adverse):
+                    dangers.append({"piece_adverse" : piece_adverse})
+    defense = []
+    for ma_piece in mon_equipe:
+        for piece_amie in mon_equipe:
+            for destination_amie in piece_amie.defenses_possibles():
+                if ma_piece.est_sur_case(destination_amie):
+                    defense.append({"piece_a_proteger" : ma_piece,
+                                    "piece_amie" : piece_amie})
+    
+    dangers
