@@ -402,33 +402,33 @@ class jeu():
     blanc = "blanc"
     noir = "noir"
     def __init__(self):
-        self.pions_noirs      = [ pion(     ligne=7, colonne=colonne, couleur=jeu.noir, jeu=self) for colonne in range(1,9)]
-        self.tours_noirs      = [ tour(     ligne=8, colonne=colonne, couleur=jeu.noir, jeu=self) for colonne in [1,8]]
-        self.cavaliers_noirs  = [ cavalier( ligne=8, colonne=colonne, couleur=jeu.noir, jeu=self) for colonne in [2,7]]
-        self.fous_noirs       = [ fou(      ligne=8, colonne=colonne, couleur=jeu.noir, jeu=self) for colonne in [3,6]]
-        self.roi_noir         = [ roi(      ligne=8, colonne=colonne, couleur=jeu.noir, jeu=self) for colonne in [4]]
-        self.reine_noir       = [ reine(    ligne=8, colonne=colonne, couleur=jeu.noir, jeu=self) for colonne in [5]]
+        pions_noirs      = [ pion(     ligne=7, colonne=colonne, couleur=jeu.noir, jeu=self) for colonne in range(1,9)]
+        tours_noirs      = [ tour(     ligne=8, colonne=colonne, couleur=jeu.noir, jeu=self) for colonne in [1,8]]
+        cavaliers_noirs  = [ cavalier( ligne=8, colonne=colonne, couleur=jeu.noir, jeu=self) for colonne in [2,7]]
+        fous_noirs       = [ fou(      ligne=8, colonne=colonne, couleur=jeu.noir, jeu=self) for colonne in [3,6]]
+        roi_noir         = [ roi(      ligne=8, colonne=colonne, couleur=jeu.noir, jeu=self) for colonne in [4]]
+        reine_noir       = [ reine(    ligne=8, colonne=colonne, couleur=jeu.noir, jeu=self) for colonne in [5]]
         
 
-        self.pions_blancs      = [ pion(     ligne=2, colonne=colonne, couleur=jeu.blanc, jeu=self) for colonne in range(1,9)]
-        self.tours_blancs      = [ tour(     ligne=1, colonne=colonne, couleur=jeu.blanc, jeu=self) for colonne in [1,8]]
-        self.cavaliers_blancs  = [ cavalier( ligne=1, colonne=colonne, couleur=jeu.blanc, jeu=self) for colonne in [2,7]]
-        self.fous_blancs       = [ fou(      ligne=1, colonne=colonne, couleur=jeu.blanc, jeu=self) for colonne in [3,6]]
-        self.roi_blanc         = [ roi(      ligne=1, colonne=colonne, couleur=jeu.blanc, jeu=self) for colonne in [4]]
-        self.reine_blanc       = [ reine(    ligne=1, colonne=colonne, couleur=jeu.blanc, jeu=self) for colonne in [5]]
+        pions_blancs      = [ pion(     ligne=2, colonne=colonne, couleur=jeu.blanc, jeu=self) for colonne in range(1,9)]
+        tours_blancs      = [ tour(     ligne=1, colonne=colonne, couleur=jeu.blanc, jeu=self) for colonne in [1,8]]
+        cavaliers_blancs  = [ cavalier( ligne=1, colonne=colonne, couleur=jeu.blanc, jeu=self) for colonne in [2,7]]
+        fous_blancs       = [ fou(      ligne=1, colonne=colonne, couleur=jeu.blanc, jeu=self) for colonne in [3,6]]
+        roi_blanc         = [ roi(      ligne=1, colonne=colonne, couleur=jeu.blanc, jeu=self) for colonne in [4]]
+        reine_blanc       = [ reine(    ligne=1, colonne=colonne, couleur=jeu.blanc, jeu=self) for colonne in [5]]
         
-        self.pieces   = self.pions_noirs       +\
-                        self.tours_noirs       +\
-                        self.cavaliers_noirs   +\
-                        self.fous_noirs        +\
-                        self.roi_noir          +\
-                        self.reine_noir        +\
-                        self.pions_blancs      +\
-                        self.tours_blancs      +\
-                        self.cavaliers_blancs  +\
-                        self.fous_blancs       +\
-                        self.roi_blanc         +\
-                        self.reine_blanc        
+        self.pieces   = pions_noirs       +\
+                        tours_noirs       +\
+                        cavaliers_noirs   +\
+                        fous_noirs        +\
+                        roi_noir          +\
+                        reine_noir        +\
+                        pions_blancs      +\
+                        tours_blancs      +\
+                        cavaliers_blancs  +\
+                        fous_blancs       +\
+                        roi_blanc         +\
+                        reine_blanc        
     def equipe(self, couleur):
         return list(filter(lambda piece:piece.couleur==couleur, self.pieces))
     def noirs(self):
@@ -693,8 +693,6 @@ if __name__ == '__main__':
     
     
     echecs.blancs()[0].ligne = 6
-    
-    
     echecs.blancs()[0].ligne = 7
     
     dangers = []
@@ -702,7 +700,8 @@ if __name__ == '__main__':
         for piece_adverse in equipe_adverse:
             for destination_adverse in piece_adverse.deplacement_possibles():
                 if ma_piece.est_sur_case(destination_adverse):
-                    dangers.append({"piece_adverse" : piece_adverse})
+                    dangers.append({"piece_a_proteger" : ma_piece,
+                                    "piece_adverse" : piece_adverse})
     defense = []
     for ma_piece in mon_equipe:
         for piece_amie in mon_equipe:
@@ -711,4 +710,5 @@ if __name__ == '__main__':
                     defense.append({"piece_a_proteger" : ma_piece,
                                     "piece_amie" : piece_amie})
     
-    dangers
+    
+    
