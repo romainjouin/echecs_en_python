@@ -429,6 +429,9 @@ class jeu():
                         fous_blancs       +\
                         roi_blanc         +\
                         reine_blanc        
+    
+        
+    
     def equipe(self, couleur):
         return list(filter(lambda piece:piece.couleur==couleur, self.pieces))
     def noirs(self):
@@ -477,6 +480,7 @@ class jeu():
     def draw(self):
         import pandas as pd
         from matplotlib import pyplot as plt
+        
         data = [_.__dict__ for _ in echecs.pieces]
         df   = pd.DataFrame(data)
         
@@ -599,8 +603,8 @@ class jeu():
     
     def choix_coup(self, equipe):
         import copy        
-        backup_positions    = copy.deepcopy(self.pieces)
-        position_d_origine  = copy.deepcopy(self.pieces)
+        #backup_positions    = copy.deepcopy(self.pieces)
+        #position_d_origine  = copy.deepcopy(self.pieces)
         calculs = []
         for piece, destinations_possibles in self.possibilites2(equipe):
             colonne_origine = piece.colonne
@@ -620,8 +624,50 @@ class jeu():
             
             
             
-        self.pieces = backup_positions
+        #self.pieces = backup_positions
         return calculs
+
+
+    def tours_blancs(self):
+        return self.get_pieces_by_type(self.blancs(), tour)
+
+    def cavaliers_blancs(self):
+        return self.get_pieces_by_type(self.blancs(), cavalier)
+
+    def fous_blancs(self):
+        return self.get_pieces_by_type(self.blancs(), fou)
+
+    def reine_blanc(self):
+        return self.get_pieces_by_type(self.blancs(), reine)
+    
+    def roi_blanc(self):
+        return self.get_pieces_by_type(self.blancs(), roi)
+
+    def pions_blancs(self):
+        return self.get_pieces_by_type(self.blancs(), pion)
+
+
+    def tours_noirs(self):
+        return self.get_pieces_by_type(self.noirs(), tour)
+
+    def cavaliers_noirs(self):
+        return self.get_pieces_by_type(self.noirs(), cavalier)
+
+    def fous_noirs(self):
+        return self.get_pieces_by_type(self.noirs(), fou)
+
+    def reine_noir(self):
+        return self.get_pieces_by_type(self.noirs(), reine)
+    
+    def roi_noir(self):
+        return self.get_pieces_by_type(self.noirs(), roi)
+
+    def pions_noirs(self):
+        return self.get_pieces_by_type(self.noirs(), pion)
+
+    
+    def get_pieces_by_type(self, equipe, type_piece):
+        return list(filter(lambda piece:type(piece) ==type_piece, equipe))
             
             
 
@@ -629,22 +675,13 @@ class jeu():
         
 if __name__ == '__main__':    
     echecs = jeu( )
-    if True:
-        tb1= echecs.tours_blancs[0]
-        fb1 = echecs.fous_blancs[0]
-        cb1 = echecs.cavaliers_blancs[0]
-        db = echecs.reine_blanc[0]
-        fb1.deplacement_possibles()
-        
-        ax = fb1.deplacements_to_df()
-        cb1.deplacements_to_df( ax=ax)
-        
     echecs.draw()
     echecs.draw_with_deplacements()
-    noirs = echecs.noirs()
-    blancs = echecs.blancs()
+
+    noirs        = echecs.noirs()
+    blancs       = echecs.blancs()
     choix_blancs = echecs.choix_coup(echecs.blancs())
-    choix_noirs = echecs.choix_coup(echecs.noirs())
+    choix_noirs  = echecs.choix_coup(echecs.noirs())
     
     def plot_choix(choix_equipe):
         import seaborn as sns
@@ -663,52 +700,97 @@ if __name__ == '__main__':
                 
         tcd = tcd.sort_index(axis=0, ascending=True).sort_index(axis=1, ascending=True)
         sns.heatmap(tcd, vmin=0, annot=True, cmap="Blues")        
+        
     plot_choix(choix_blancs)
     plot_choix(choix_noirs )
     
     mon_equipe           = echecs.blancs()
     equipe_adverse       = echecs.noirs()
     
-    mouvements_adversaire = map(lambda piece: piece.deplacement_possibles(), equipe_adverse)
-    mouvements_adversaire = [y for x in mouvements_adversaire for y in x]
     
-    mouvements_ami = map(lambda piece: piece.deplacement_possibles(), mon_equipe)
-    mouvements_ami = [y for x in mouvements_ami for y in x]
+    def calculate_puissances(mon_equipe, equipe_adverse):
+        ma_puissance      = calculate_puissance(mon_equipe)
+        puissance_adverse = calculate_puissance(equipe_adverse)
+        return ma_puissance, puissance_adverse
     
-    nb_attaques_totales   = 0
-    position = []
-    for ma_piece in mon_equipe:
-        risque     = filter(lambda deplacement_adverse : ma_piece.est_sur_case(deplacement_adverse) , mouvements_adversaire)
-        defense    = filter(lambda deplacement_ami     : ma_piece.est_sur_case(deplacement_ami)     , mouvements_ami)
-        attaques   = list(risque)
-        defenses   = list(defense)
-        nb_attaque = len(attaques)
-        nb_defense = len(defenses)
-        dico       = {"piece" : ma_piece, "attaques" :attaques, "defenses":  defenses}
-        position.append(dico)
-        nb_attaques_totales += nb_attaque
-        print(ma_piece, nb_attaque )
-    print(nb_attaques_totales, position)
-    pd.DataFrame(position)
+    def suis_je_leader(mon_equipe, equipe_adverse):
+        ma_puissance, puissance_adverse = calculate_puissances(mon_equipe, equipe_adverse)
+        return puissance_adverse < ma_puissance
     
+    def suis_je_en_danger(mon_equipe, equipe_adverse, ratio_minimum=0.9):
+        ma_puissance, puissance_adverse = calculate_puissances(mon_equipe, equipe_adverse)
+        ratio = ma_puissance/ puissance_adverse
+        return  ratio < ratio_minimum
     
-    echecs.blancs()[0].ligne = 6
-    echecs.blancs()[0].ligne = 7
+    def calculate_puissance(equipe):
+        for ma_piece in mon_equipe:
+            ma_piece.dangers = []
+            for piece_adverse in equipe_adverse:
+                for destination_adverse in piece_adverse.deplacement_possibles():
+                    if ma_piece.est_sur_case(destination_adverse):
+                        ma_piece.dangers.append(piece_adverse)
     
-    dangers = []
-    for ma_piece in mon_equipe:
+            ma_piece.defense = []
+            for piece_amie in mon_equipe:
+                for destination_amie in piece_amie.defenses_possibles():
+                    if ma_piece.est_sur_case(destination_amie):
+                        ma_piece.defense.append(piece_amie)
+    
+            ma_piece.attaque = []        
+            for case_que_je_prends in ma_piece.deplacement_possibles():
+                for piece_adverse in equipe_adverse:
+                    if piece_adverse.est_sur_case(case_que_je_prends):
+                        ma_piece.attaque.append(piece_adverse)
+            ma_piece.puissance  = len(ma_piece.defense) - len(ma_piece.dangers) + len(ma_piece.attaque)
+    
+        ma_puissance = sum([ma_piece.puissance for ma_piece in mon_equipe])
+        return ma_puissance
+    
+    def scenario_1_coup(mon_equipe, equipe_adverse):
+        ma_puissance_avant, puissance_adverse_avant = calculate_puissances(mon_equipe, equipe_adverse)
+        print(ma_puissance_avant, puissance_adverse_avant )
         for piece_adverse in equipe_adverse:
+            colonne_initiale = piece_adverse.colonne
+            ligne_initiale   = piece_adverse.ligne
             for destination_adverse in piece_adverse.deplacement_possibles():
-                if ma_piece.est_sur_case(destination_adverse):
-                    dangers.append({"piece_a_proteger" : ma_piece,
-                                    "piece_adverse" : piece_adverse})
-    defense = []
-    for ma_piece in mon_equipe:
-        for piece_amie in mon_equipe:
-            for destination_amie in piece_amie.defenses_possibles():
-                if ma_piece.est_sur_case(destination_amie):
-                    defense.append({"piece_a_proteger" : ma_piece,
-                                    "piece_amie" : piece_amie})
+                piece_adverse.colonne   = destination_adverse.colonne
+                piece_adverse.ligne     = destination_adverse.ligne
+                ma_puissance_apres_mvmt = calculate_puissance(mon_equipe)
+                print(piece_adverse, destination_adverse, ma_puissance_apres_mvmt)
+            piece_adverse.colonne   = colonne_initiale
+            piece_adverse.ligne     = ligne_initiale
     
+    def meilleur_coup(equipe):
+        choix           = echecs.choix_coup(equipe)
+        meileurs_points = sorted(choix , key=lambda dico: dico["nb_de_points"])
+        puissance_apres_coup = []
+        for coup in meileurs_points:
+            colonne_depart = coup["piece"].colonne
+            ligne_depart   = coup["piece"].ligne
+            coup["piece"].colonne = coup["destination"].colonne
+            coup["piece"].ligne   = coup["destination"].ligne
+            nouvelle_puissance = calculate_puissance(equipe)
+            dico = {"nouvelle_puissance" : nouvelle_puissance,
+                    "coup" : coup }
+            puissance_apres_coup.append(dico)
+            coup["piece"].colonne = colonne_depart
+            coup["piece"].ligne   = ligne_depart
+        meilleurs_coup = sorted(puissance_apres_coup, key=lambda dico: dico["nouvelle_puissance"])
+        return meilleurs_coup
     
-    
+    def jouer(equipe):
+        coup          = meilleur_coup(equipe)[-1]
+        piece_a_jouer = coup["coup"]["piece"]
+        print(id(piece_a_jouer))
+        destination   = coup["coup"]["destination"]
+        print(piece_a_jouer, "->", destination)
+        piece_a_jouer.colonne = destination.colonne
+        piece_a_jouer.ligne   = destination.ligne
+        echecs.draw()
+        
+    for n in range(2):
+        jouer(mon_equipe)
+        jouer(equipe_adverse)
+        
+
+        
